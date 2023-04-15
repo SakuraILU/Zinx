@@ -14,6 +14,8 @@ type Connection struct {
 	is_closed  bool
 
 	data_pack ziface.IDataPack
+	msg_chan  chan []byte
+	exit_chan chan bool
 }
 
 func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager) (connection *Connection) {
@@ -26,6 +28,8 @@ func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager) (
 		is_closed:  false,
 
 		data_pack: data_pack,
+		msg_chan:  make(chan []byte, 3),
+		exit_chan: make(chan bool),
 	}
 	return
 }
@@ -33,7 +37,9 @@ func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager) (
 func (this *Connection) unpackMsg() (msg ziface.IMessage, err error) {
 
 	buf := make([]byte, this.data_pack.GetHeadLen())
-	_, err = this.conn.Read(buf)
+
+	// // ReadFull reads exactly len(buf) bytes from r into buf...避免了TCP包的帧头段可能不完整的问题，more safer
+	_, err = io.ReadFull(this.conn, buf) // _, err = this.conn.Read(buf)
 
 	if err != nil {
 		return
@@ -43,7 +49,8 @@ func (this *Connection) unpackMsg() (msg ziface.IMessage, err error) {
 		return
 	}
 
-	_, err = this.conn.Read(msg.GetMsgData())
+	// ReadFull reads exactly len(buf) bytes from r into buf...避免了TCP包的数据段可能不完整的问题, more safer
+	_, err = io.ReadFull(this.conn, msg.GetMsgData()) // this.conn.Read(msg.GetMsgData())
 	// _, err = io.ReadFull(this.conn, msg.GetMsgData())
 	if err != nil {
 		return
@@ -52,7 +59,27 @@ func (this *Connection) unpackMsg() (msg ziface.IMessage, err error) {
 	return
 }
 
+func (this *Connection) Writer() {
+end:
+	for {
+		select {
+		case <-this.exit_chan:
+			break end
+		case buf := <-this.msg_chan:
+			if _, err := this.conn.Write(buf); err != nil {
+				break end
+			}
+		}
+	}
+
+	fmt.Printf("writer of connection %d is exit...", this.id)
+}
+
 func (this *Connection) Start() {
+	// start goes out a Writer，then serves as Reader itself
+
+	go this.Writer()
+
 	for {
 		msg, err := this.unpackMsg()
 		if err == io.EOF {
@@ -64,7 +91,8 @@ func (this *Connection) Start() {
 
 		request := NewRequest(this, msg)
 
-		this.rt_manager.ExecHandler(request)
+		// 读写分离后，读不需要handler的数据了，因此无需等待handler，把handler给go出去
+		go this.rt_manager.ExecHandler(request)
 	}
 
 	defer this.Stop()
@@ -75,9 +103,16 @@ func (this *Connection) Stop() {
 		return
 	}
 
+	// tell writer that reader is ready to exit...
+	// otherwise writer may still use the closed tcp connection and cause error
+	this.exit_chan <- true
+
 	this.conn.Close()
 	this.is_closed = true
-	fmt.Printf("Connection %d is stopped\n", this.id)
+
+	close(this.msg_chan)
+	close(this.exit_chan)
+	fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
 }
 
 func (this *Connection) GetConnID() (id uint32) {
@@ -96,6 +131,7 @@ func (this *Connection) SendMsg(id uint32, data []byte) (err error) {
 	if err != nil {
 		return
 	}
-	this.conn.Write(buf)
+	// this.conn.Write(buf)
+	this.msg_chan <- buf
 	return
 }
