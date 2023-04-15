@@ -19,7 +19,7 @@ func NewMessage(id uint32, data []byte) (msg ziface.IMessage) {
 	return
 }
 
-func (this *Message) GetMsgId() (id uint32) {
+func (this *Message) GetMsgID() (id uint32) {
 	id = this.id
 	return
 }
@@ -34,7 +34,7 @@ func (this *Message) GetDataLen() (len uint32) {
 	return
 }
 
-func (this *Message) SetMsgId(id uint32) {
+func (this *Message) SetMsgID(id uint32) {
 	this.id = id
 }
 

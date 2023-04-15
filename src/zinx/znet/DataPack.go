@@ -20,7 +20,7 @@ func (this *DataPack) Pack(msg ziface.IMessage) (data []byte, err error) {
 	if err = binary.Write(buf, binary.LittleEndian, msg.GetDataLen()); err != nil {
 		return
 	}
-	if err = binary.Write(buf, binary.LittleEndian, msg.GetMsgId()); err != nil {
+	if err = binary.Write(buf, binary.LittleEndian, msg.GetMsgID()); err != nil {
 		return
 	}
 	if err = binary.Write(buf, binary.LittleEndian, msg.GetMsgData()); err != nil {
@@ -33,7 +33,7 @@ func (this *DataPack) Pack(msg ziface.IMessage) (data []byte, err error) {
 		panic("Pack error: len is not correct")
 	}
 	// assert id
-	if binary.LittleEndian.Uint32(data[4:8]) != msg.GetMsgId() {
+	if binary.LittleEndian.Uint32(data[4:8]) != msg.GetMsgID() {
 		panic("Pack error: id is not correct")
 	}
 	// assert data len should be 8 + msg data len

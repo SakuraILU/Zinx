@@ -56,7 +56,7 @@ func TestDataPack_UnpackHead(t *testing.T) {
 		return
 	}
 	// assert msg id
-	if msg_head.GetMsgId() != 0 {
+	if msg_head.GetMsgID() != 0 {
 		t.Error("UnpackHead error: msg id is not correct")
 		return
 	}
@@ -84,7 +84,7 @@ func TestDataPack_Unpack(t *testing.T) {
 		return
 	}
 	// assert msg id
-	if msg_head.GetMsgId() != 0 {
+	if msg_head.GetMsgID() != 0 {
 		t.Error("UnpackHead error: msg id is not correct")
 		return
 	}
@@ -128,7 +128,7 @@ func TestDataPack_MultiPack(t *testing.T) {
 		return
 	}
 	// assert msg id
-	if msg_head.GetMsgId() != 0 {
+	if msg_head.GetMsgID() != 0 {
 		t.Error("UnpackHead error: msg id is not correct")
 		return
 	}
@@ -151,7 +151,7 @@ func TestDataPack_MultiPack(t *testing.T) {
 		return
 	}
 	// assert msg id
-	if msg_head.GetMsgId() != 0 {
+	if msg_head.GetMsgID() != 0 {
 		t.Error("UnpackHead error: msg id is not correct")
 		return
 	}

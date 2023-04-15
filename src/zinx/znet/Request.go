@@ -32,5 +32,5 @@ func (this *Request) GetDataLen() uint32 {
 }
 
 func (this *Request) GetMsgId() uint32 {
-	return this.msg.GetMsgId()
+	return this.msg.GetMsgID()
 }
