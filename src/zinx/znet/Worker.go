@@ -1,6 +1,8 @@
 package znet
 
 import (
+	"fmt"
+	"main/src/zinx/utils"
 	"main/src/zinx/ziface"
 )
 
@@ -10,11 +12,11 @@ type Worker struct {
 	task_queue      chan ziface.IRequest
 }
 
-func NewWorker(id uint32, task_queue_size uint32) (worker *Worker) {
+func NewWorker(id uint32) (worker *Worker) {
 	worker = &Worker{
 		id:              id,
-		task_queue_size: task_queue_size,
-		task_queue:      make(chan ziface.IRequest, task_queue_size),
+		task_queue_size: utils.Global_obj.TaskQueueSize,
+		task_queue:      make(chan ziface.IRequest, utils.Global_obj.TaskQueueSize),
 	}
 	return
 }

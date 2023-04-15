@@ -1,0 +1,12 @@
+{
+	"Name": "zinx_v0.6",
+
+	"Ip":   "127.0.0.1",
+	"Port": 8999,
+
+	"MaxDataLen": 4096,
+    "MaxMsgRWChanLen": 5,
+
+	"PoolSize": 5,
+	"TaskQueueSize": 20
+}

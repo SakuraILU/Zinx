@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	var msg_id uint32 = 0 // 0 for echo, 1 for ping
+	var msg_id uint32 = 1 // 0 for echo, 1 for ping
 
 	conn, err := net.Dial("tcp", "127.0.0.1:8999")
 	if err != nil {

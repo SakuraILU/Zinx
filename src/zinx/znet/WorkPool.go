@@ -1,6 +1,7 @@
 package znet
 
 import (
+	"main/src/zinx/utils"
 	"main/src/zinx/ziface"
 )
 
@@ -12,11 +13,11 @@ type WorkPool struct {
 	started bool
 }
 
-func NewWorkPool(pool_size uint32, task_queue_size uint32) (work_pool *WorkPool) {
+func NewWorkPool() (work_pool *WorkPool) {
 	work_pool = &WorkPool{
-		pool_size:       pool_size,
-		task_queue_size: task_queue_size,
-		works:           make([]ziface.IWroker, pool_size),
+		pool_size:       utils.Global_obj.PoolSize,
+		task_queue_size: utils.Global_obj.TaskQueueSize,
+		works:           make([]ziface.IWroker, utils.Global_obj.PoolSize),
 
 		started: false,
 	}
@@ -37,7 +38,7 @@ func (this *WorkPool) StartWorkPool() {
 	}
 
 	for id := 0; id < int(this.pool_size); id++ {
-		this.works[id] = NewWorker(uint32(id), this.task_queue_size)
+		this.works[id] = NewWorker(uint32(id))
 		go this.works[id].StartWork()
 	}
 	this.started = true

@@ -2,6 +2,7 @@ package znet
 
 import (
 	"fmt"
+	"main/src/zinx/utils"
 	"main/src/zinx/ziface"
 	"net"
 )
@@ -20,12 +21,12 @@ type Server struct {
 
 func NewServer(name string) (server *Server) {
 	server = &Server{
-		name:       name,
+		name:       utils.Global_obj.Name,
 		ip_version: "tcp4",
-		ip:         "127.0.0.1",
-		port:       8999,
+		ip:         utils.Global_obj.Ip,
+		port:       utils.Global_obj.Port,
 		rt_manager: NewRouterManager(),
-		work_pool:  NewWorkPool(3, 6),
+		work_pool:  NewWorkPool(),
 	}
 	return
 }

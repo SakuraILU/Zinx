@@ -3,6 +3,8 @@ package znet
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
+	"main/src/zinx/utils"
 	"main/src/zinx/ziface"
 )
 
@@ -16,10 +18,16 @@ func NewDataPack() (data_pack *DataPack) {
 
 func (this *DataPack) Pack(msg ziface.IMessage) (data []byte, err error) {
 	// 打印msg信息
+	if msg.GetDataLen() > utils.Global_obj.MaxDataLen {
+		err = errors.New("exceed the max limit of data")
+		return
+	}
+
 	buf := bytes.NewBuffer([]byte{})
 	if err = binary.Write(buf, binary.LittleEndian, msg.GetDataLen()); err != nil {
 		return
 	}
+
 	if err = binary.Write(buf, binary.LittleEndian, msg.GetMsgID()); err != nil {
 		return
 	}
@@ -50,13 +58,19 @@ func (this *DataPack) UnpackHead(head []byte) (msg ziface.IMessage, err error) {
 	if err = binary.Read(buf, binary.LittleEndian, &len); err != nil {
 		return
 	}
+	if len > utils.Global_obj.MaxDataLen {
+		err = errors.New("exceed the max limit of data")
+		return
+	}
+
 	if err = binary.Read(buf, binary.LittleEndian, &id); err != nil {
 		return
 	}
+
 	msg = NewMessage(id, make([]byte, len))
 	return
 }
 
 func (this *DataPack) GetHeadLen() uint32 {
-	return 8
+	return 8 // 4 + 4
 }
