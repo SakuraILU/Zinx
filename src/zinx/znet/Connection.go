@@ -16,9 +16,11 @@ type Connection struct {
 	data_pack ziface.IDataPack
 	msg_chan  chan []byte
 	exit_chan chan bool
+
+	work_pool ziface.IWorkPool
 }
 
-func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager) (connection *Connection) {
+func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager, work_pool ziface.IWorkPool) (connection *Connection) {
 	data_pack := NewDataPack()
 
 	connection = &Connection{
@@ -30,6 +32,8 @@ func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager) (
 		data_pack: data_pack,
 		msg_chan:  make(chan []byte, 3),
 		exit_chan: make(chan bool),
+
+		work_pool: work_pool,
 	}
 	return
 }
@@ -92,7 +96,7 @@ func (this *Connection) Start() {
 		request := NewRequest(this, msg)
 
 		// 读写分离后，读不需要handler的数据了，因此无需等待handler，把handler给go出去
-		go this.rt_manager.ExecHandler(request)
+		go this.work_pool.AddRequest(request)
 	}
 
 	defer this.Stop()
@@ -134,4 +138,8 @@ func (this *Connection) SendMsg(id uint32, data []byte) (err error) {
 	// this.conn.Write(buf)
 	this.msg_chan <- buf
 	return
+}
+
+func (this *Connection) GetRouterManager() ziface.IRouterManager {
+	return this.rt_manager
 }

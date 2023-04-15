@@ -15,6 +15,7 @@ type Server struct {
 	port       uint32
 
 	rt_manager ziface.IRouterManager
+	work_pool  ziface.IWorkPool
 }
 
 func NewServer(name string) (server *Server) {
@@ -24,11 +25,13 @@ func NewServer(name string) (server *Server) {
 		ip:         "127.0.0.1",
 		port:       8999,
 		rt_manager: NewRouterManager(),
+		work_pool:  NewWorkPool(3, 6),
 	}
 	return
 }
 
 func (this *Server) Start() {
+	this.work_pool.StartWorkPool()
 
 	fmt.Printf("start server %s at (%s: %d)\n", this.name, this.ip, this.port)
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", this.ip, this.port))
@@ -44,7 +47,7 @@ func (this *Server) Start() {
 			continue
 		}
 
-		connection := NewConnection(conn_id, conn, this.rt_manager)
+		connection := NewConnection(conn_id, conn, this.rt_manager, this.work_pool)
 		go connection.Start()
 
 		conn_id++
