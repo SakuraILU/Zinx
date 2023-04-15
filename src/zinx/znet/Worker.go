@@ -1,7 +1,6 @@
 package znet
 
 import (
-	"fmt"
 	"main/src/zinx/utils"
 	"main/src/zinx/ziface"
 )

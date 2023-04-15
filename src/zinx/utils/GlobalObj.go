@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 )
 
@@ -36,6 +37,7 @@ func init() {
 	buf, err := ioutil.ReadFile("config/config.json")
 	// invalid json file or not exist...
 	if err != nil {
+		fmt.Println("config/config.json doesn't exist, use default config.")
 		return
 	}
 
