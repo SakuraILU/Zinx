@@ -8,5 +8,5 @@ type IServer interface {
 	// run server
 	Serve()
 	// add rounter
-	AddRounter(IRouter)
+	AddRounter(uint32, IRouter)
 }

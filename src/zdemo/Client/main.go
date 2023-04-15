@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
+	var msg_id uint32 = 1 // 0 for echo, 1 for ping
+
 	conn, err := net.Dial("tcp", "127.0.0.1:8999")
 	if err != nil {
 		panic(err.Error())
@@ -15,7 +17,7 @@ func main() {
 	data_pack := znet.NewDataPack()
 	for i := 0; i < 10; i++ {
 
-		msg := znet.NewMessage(0, []byte("Hello, server\n..fegfaehfa fefio\n fjwieofhew\n EOF"))
+		msg := znet.NewMessage(msg_id, []byte("Hello, server\n..fegfaehfa fefio\n fjwieofhew\n EOF"))
 		buf, err := data_pack.Pack(msg)
 		if err != nil {
 			panic(err.Error())

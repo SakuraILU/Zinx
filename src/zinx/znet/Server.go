@@ -14,7 +14,7 @@ type Server struct {
 	ip         string
 	port       uint32
 
-	router ziface.IRouter
+	rt_manager ziface.IRouterManager
 }
 
 func NewServer(name string) (server *Server) {
@@ -23,7 +23,7 @@ func NewServer(name string) (server *Server) {
 		ip_version: "tcp4",
 		ip:         "127.0.0.1",
 		port:       8999,
-		router:     nil,
+		rt_manager: NewRouterManager(),
 	}
 	return
 }
@@ -44,7 +44,7 @@ func (this *Server) Start() {
 			continue
 		}
 
-		connection := NewConnection(conn_id, conn, this.router)
+		connection := NewConnection(conn_id, conn, this.rt_manager)
 		go connection.Start()
 
 		conn_id++
@@ -61,6 +61,6 @@ func (this *Server) Serve() {
 	defer this.Stop()
 }
 
-func (this *Server) AddRounter(router ziface.IRouter) {
-	this.router = router
+func (this *Server) AddRounter(msg_id uint32, router ziface.IRouter) {
+	this.rt_manager.AddRouter(msg_id, router)
 }

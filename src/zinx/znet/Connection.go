@@ -8,22 +8,22 @@ import (
 )
 
 type Connection struct {
-	id        uint32
-	conn      net.Conn
-	router    ziface.IRouter
-	is_closed bool
+	id         uint32
+	conn       net.Conn
+	rt_manager ziface.IRouterManager
+	is_closed  bool
 
 	data_pack ziface.IDataPack
 }
 
-func NewConnection(id uint32, conn net.Conn, router ziface.IRouter) (connection *Connection) {
+func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager) (connection *Connection) {
 	data_pack := NewDataPack()
 
 	connection = &Connection{
-		id:        id,
-		conn:      conn,
-		router:    router,
-		is_closed: false,
+		id:         id,
+		conn:       conn,
+		rt_manager: rt_manager,
+		is_closed:  false,
 
 		data_pack: data_pack,
 	}
@@ -64,9 +64,7 @@ func (this *Connection) Start() {
 
 		request := NewRequest(this, msg)
 
-		this.router.PreHandle(request)
-		this.router.Handle(request)
-		this.router.PostHandle(request)
+		this.rt_manager.ExecHandler(request)
 	}
 
 	defer this.Stop()

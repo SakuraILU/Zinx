@@ -22,8 +22,7 @@ func (this *PingRouter) PreHandle(request ziface.IRequest) {
 }
 
 func (this *PingRouter) Handle(request ziface.IRequest) {
-	data := request.GetData()
-	err := request.GetConn().SendMsg(1, data)
+	err := request.GetConn().SendMsg(0, []byte("Pong..."))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -36,8 +35,40 @@ func (this *PingRouter) PostHandle(request ziface.IRequest) {
 	}
 }
 
+type EchoRouter struct {
+	znet.BaseRounter
+}
+
+func NewEchoRouter() (ping_test *EchoRouter) {
+	ping_test = &EchoRouter{}
+	return
+}
+
+func (this *EchoRouter) PreHandle(request ziface.IRequest) {
+	err := request.GetConn().SendMsg(0, []byte("PreHandle"))
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func (this *EchoRouter) Handle(request ziface.IRequest) {
+	data := request.GetData()
+	err := request.GetConn().SendMsg(0, data)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func (this *EchoRouter) PostHandle(request ziface.IRequest) {
+	err := request.GetConn().SendMsg(0, []byte("PostHandle"))
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
 func main() {
 	server := znet.NewServer("sever_v0.3")
-	server.AddRounter(NewPingRouter())
+	server.AddRounter(0, NewEchoRouter())
+	server.AddRounter(1, NewPingRouter())
 	server.Serve()
 }
