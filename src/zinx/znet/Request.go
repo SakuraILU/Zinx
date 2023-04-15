@@ -1,26 +1,36 @@
 package znet
 
-import "net"
+import (
+	"main/src/zinx/ziface"
+)
 
 type Request struct {
-	conn net.Conn
-	data []byte
+	conn ziface.IConnection
+	msg  ziface.IMessage
 }
 
-func NewRequest(conn net.Conn, data []byte) (request *Request) {
+func NewRequest(conn ziface.IConnection, msg ziface.IMessage) (request *Request) {
 	request = &Request{
 		conn: conn,
-		data: data,
+		msg:  msg,
 	}
 	return
 }
 
-func (this *Request) GetConn() (conn net.Conn) {
+func (this *Request) GetConn() (conn ziface.IConnection) {
 	conn = this.conn
 	return
 }
 
 func (this *Request) GetData() (data []byte) {
-	data = this.data
+	data = this.msg.GetMsgData()
 	return
+}
+
+func (this *Request) GetDataLen() uint32 {
+	return this.msg.GetDataLen()
+}
+
+func (this *Request) GetMsgId() uint32 {
+	return this.msg.GetMsgId()
 }

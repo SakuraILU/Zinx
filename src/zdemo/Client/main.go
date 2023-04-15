@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"main/src/zinx/znet"
 	"net"
 	"time"
 )
@@ -11,17 +12,31 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+	data_pack := znet.NewDataPack()
 	for i := 0; i < 10; i++ {
-		_, err = conn.Write([]byte("Hello, world"))
+
+		msg := znet.NewMessage(0, []byte("Hello, server\n..fegfaehfa fefio\n fjwieofhew\n EOF"))
+		buf, err := data_pack.Pack(msg)
 		if err != nil {
 			panic(err.Error())
 		}
-		resp := make([]byte, 512)
-		_, err = conn.Read(resp)
+		_, err = conn.Write(buf)
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Println(string(resp))
+
+		head := make([]byte, data_pack.GetHeadLen())
+		_, err = conn.Read(head)
+		if err != nil {
+			panic(err.Error())
+		}
+		msg, err = data_pack.UnpackHead(head)
+		if err != nil {
+			panic(err.Error())
+		}
+		conn.Read(msg.GetMsgData())
+		fmt.Println(string(msg.GetMsgData()))
+
 		time.Sleep(1 * time.Second)
 	}
 }

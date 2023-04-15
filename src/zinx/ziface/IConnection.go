@@ -7,9 +7,7 @@ import (
 type IConnection interface {
 	Start()
 	Stop()
-	GetConnID() uint
+	GetConnID() uint32
 	RemoteAddr() net.Addr
-	Send(data []byte) error
+	SendMsg(id uint32, data []byte) error
 }
-
-type Handler func(IRequest) error

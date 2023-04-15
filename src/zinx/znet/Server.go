@@ -12,7 +12,9 @@ type Server struct {
 
 	ip_version string
 	ip         string
-	port       uint
+	port       uint32
+
+	router ziface.IRouter
 }
 
 func NewServer(name string) (server *Server) {
@@ -21,12 +23,8 @@ func NewServer(name string) (server *Server) {
 		ip_version: "tcp4",
 		ip:         "127.0.0.1",
 		port:       8999,
+		router:     nil,
 	}
-	return
-}
-
-func handler(request ziface.IRequest) (err error) {
-	request.GetConn().Write(request.GetData())
 	return
 }
 
@@ -38,8 +36,7 @@ func (this *Server) Start() {
 		panic(err.Error())
 	}
 
-	var conn_id uint
-	conn_id = 0
+	var conn_id uint32 = 0
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -47,7 +44,7 @@ func (this *Server) Start() {
 			continue
 		}
 
-		connection := NewConnection(conn_id, conn, handler)
+		connection := NewConnection(conn_id, conn, this.router)
 		go connection.Start()
 
 		conn_id++
@@ -62,4 +59,8 @@ func (this *Server) Serve() {
 	this.Start()
 
 	defer this.Stop()
+}
+
+func (this *Server) AddRounter(router ziface.IRouter) {
+	this.router = router
 }

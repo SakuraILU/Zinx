@@ -7,4 +7,6 @@ type IServer interface {
 	Stop()
 	// run server
 	Serve()
+	// add rounter
+	AddRounter(IRouter)
 }
