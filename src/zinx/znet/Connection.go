@@ -1,9 +1,12 @@
 package znet
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"main/src/zinx/ziface"
 	"net"
+	"sync"
 )
 
 type Connection struct {
@@ -22,6 +25,9 @@ type Connection struct {
 
 	onConnStart func(ziface.IConnection)
 	onConnStop  func(ziface.IConnection)
+
+	properties map[string]interface{}
+	prop_lock  sync.RWMutex
 }
 
 func NewConnection(id uint32, conn net.Conn, server ziface.IServer) (connection *Connection) {
@@ -43,6 +49,9 @@ func NewConnection(id uint32, conn net.Conn, server ziface.IServer) (connection 
 
 		onConnStart: server.GetOnConnStart(),
 		onConnStop:  server.GetOnConnStop(),
+
+		properties: make(map[string]interface{}),
+		prop_lock:  sync.RWMutex{},
 	}
 
 	return
@@ -158,4 +167,28 @@ func (this *Connection) SendMsg(id uint32, data []byte) (err error) {
 
 func (this *Connection) GetRouterManager() ziface.IRouterManager {
 	return this.rt_manager
+}
+
+func (this *Connection) SetProperty(key string, value interface{}) {
+	this.prop_lock.Lock()
+	defer this.prop_lock.Unlock()
+	this.properties[key] = value
+}
+
+func (this *Connection) GetProperty(key string) (value interface{}, err error) {
+	this.prop_lock.RLock()
+	defer this.prop_lock.RUnlock()
+
+	value, ok := this.properties[key]
+	if !ok {
+		err = errors.New(fmt.Sprintf("propery %s not found", key))
+	}
+	return
+}
+
+func (this *Connection) RemoveProperty(key string) {
+	this.prop_lock.Lock()
+	defer this.prop_lock.Unlock()
+
+	delete(this.properties, key)
 }

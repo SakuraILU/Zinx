@@ -47,8 +47,8 @@ func establish_dial(msg_id uint32, client_id int) {
 }
 
 func main() {
-	for i := 0; i < 100; i++ {
-		msg_id := i % 2
+	for i := 0; i < 10; i++ {
+		msg_id := 1
 		go establish_dial(uint32(msg_id), i)
 		wg.Add(1)
 	}

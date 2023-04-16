@@ -4,26 +4,35 @@ import (
 	"fmt"
 	"main/src/zinx/ziface"
 	"main/src/zinx/znet"
+	"sync"
 )
 
 type PingRouter struct {
 	znet.BaseRounter
+	cnt      uint32
+	cnt_lock sync.RWMutex
 }
 
 func NewPingRouter() (ping_test *PingRouter) {
-	ping_test = &PingRouter{}
+	ping_test = &PingRouter{
+		cnt:      0,
+		cnt_lock: sync.RWMutex{},
+	}
 	return
 }
 
 func (this *PingRouter) PreHandle(request ziface.IRequest) {
-	// err := request.GetConn().SendMsg(0, []byte("PreHandle"))
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
+	this.cnt_lock.Lock()
+	defer this.cnt_lock.Unlock()
+
+	request.GetConn().SetProperty("total ping", this.cnt)
+	this.cnt++
 }
 
 func (this *PingRouter) Handle(request ziface.IRequest) {
-	err := request.GetConn().SendMsg(0, []byte(fmt.Sprintf("I am Server connetion %d", request.GetConn().GetConnID())))
+	cnt, err := request.GetConn().GetProperty("total ping")
+	cnt = cnt.(uint32)
+	err = request.GetConn().SendMsg(0, []byte(fmt.Sprintf("[NPing %v]I am Server connetion %d", cnt, request.GetConn().GetConnID())))
 	if err != nil {
 		panic(err.Error())
 	}
