@@ -9,6 +9,7 @@ type IConnection interface {
 	Stop()
 	GetConnID() uint32
 	RemoteAddr() net.Addr
-	GetRouterManager() IRouterManager
 	SendMsg(id uint32, data []byte) error
+
+	GetRouterManager() IRouterManager
 }

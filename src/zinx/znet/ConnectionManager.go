@@ -41,12 +41,14 @@ func (this *ConnectionManager) Add(conn ziface.IConnection) {
 	this.size++
 }
 
+// not only remove the element in the map, but also stop this connection to free its socket and other resources
 func (this *ConnectionManager) Remove(conn ziface.IConnection) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
 	delete(this.conns, conn.GetConnID())
 	this.size--
+	defer conn.Stop()
 }
 
 // not only clear the map, but also Stop all the connections to free sockets and other resources

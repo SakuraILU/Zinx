@@ -20,6 +20,9 @@ type Server struct {
 	rt_manager   ziface.IRouterManager
 	work_pool    ziface.IWorkPool
 	conn_manager ziface.IConnectionManager
+
+	onConnStart func(ziface.IConnection)
+	onConnStop  func(ziface.IConnection)
 }
 
 func NewServer() (server *Server) {
@@ -31,6 +34,9 @@ func NewServer() (server *Server) {
 		rt_manager:   NewRouterManager(),
 		work_pool:    NewWorkPool(),
 		conn_manager: NewConnectionManager(),
+
+		onConnStart: func(i ziface.IConnection) {},
+		onConnStop:  func(i ziface.IConnection) {},
 	}
 
 	return
@@ -53,12 +59,14 @@ func (this *Server) Start() {
 			continue
 		}
 
+		// fmt.Printf("size of connections is %d\n", this.conn_manager.Size())
 		if this.conn_manager.Size() >= utils.Global_obj.MaxConnSize {
 			conn.Close()
 			continue
 		}
 
 		connection := NewConnection(conn_id, conn, this)
+		this.conn_manager.Add(connection)
 		go connection.Start()
 
 		conn_id++
@@ -90,6 +98,20 @@ func (this *Server) GetWorkPool() ziface.IWorkPool {
 
 func (this *Server) GetConnectionManager() ziface.IConnectionManager {
 	return this.conn_manager
+}
+
+func (this *Server) SetOnConnStart(fun func(ziface.IConnection)) {
+	this.onConnStart = fun
+}
+func (this *Server) SetOnConnStop(fun func(ziface.IConnection)) {
+	this.onConnStop = fun
+}
+
+func (this *Server) GetOnConnStart() func(ziface.IConnection) {
+	return this.onConnStart
+}
+func (this *Server) GetOnConnStop() func(ziface.IConnection) {
+	return this.onConnStop
 }
 
 func (this *Server) waitExitSig() {

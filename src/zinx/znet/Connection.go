@@ -1,7 +1,6 @@
 package znet
 
 import (
-	"fmt"
 	"io"
 	"main/src/zinx/ziface"
 	"net"
@@ -20,6 +19,9 @@ type Connection struct {
 	data_pack ziface.IDataPack
 	msg_chan  chan []byte
 	exit_chan chan bool
+
+	onConnStart func(ziface.IConnection)
+	onConnStop  func(ziface.IConnection)
 }
 
 func NewConnection(id uint32, conn net.Conn, server ziface.IServer) (connection *Connection) {
@@ -38,10 +40,11 @@ func NewConnection(id uint32, conn net.Conn, server ziface.IServer) (connection 
 		data_pack: data_pack,
 		msg_chan:  make(chan []byte, 3),
 		exit_chan: make(chan bool),
+
+		onConnStart: server.GetOnConnStart(),
+		onConnStop:  server.GetOnConnStop(),
 	}
 
-	fmt.Printf("current has %d connections\n", server.GetConnectionManager().Size())
-	server.GetConnectionManager().Add(connection)
 	return
 }
 
@@ -87,10 +90,13 @@ end:
 }
 
 func (this *Connection) Start() {
-	defer this.Stop()
+	defer this.conn_manager.Remove(this)
 
 	// start goes out a Writer，then serves as Reader itself
 	go this.Writer()
+
+	// on start callback, before reading from client...
+	this.onConnStart(this)
 
 	for {
 		msg, err := this.unpackMsg()
@@ -113,7 +119,10 @@ func (this *Connection) Stop() {
 	if this.is_closed {
 		return
 	}
-	fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
+	// fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
+
+	// on stop callback, before end this connection...
+	this.onConnStop(this)
 
 	// tell writer that reader is ready to exit...
 	// otherwise writer may still use the closed tcp connection and cause error
@@ -124,8 +133,6 @@ func (this *Connection) Stop() {
 
 	close(this.msg_chan)
 	close(this.exit_chan)
-
-	this.conn_manager.Remove(this)
 }
 
 func (this *Connection) GetConnID() (id uint32) {

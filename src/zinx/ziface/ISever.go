@@ -7,6 +7,7 @@ type IServer interface {
 	Stop()
 	// run Server
 	Serve()
+
 	// add a rounter
 	AddRounter(uint32, IRouter)
 	// get routerManager
@@ -15,4 +16,13 @@ type IServer interface {
 	GetWorkPool() IWorkPool
 	// get connection manager
 	GetConnectionManager() IConnectionManager
+
+	// set onConnStartCallback
+	SetOnConnStart(func(IConnection))
+	// set onConnStopCallback
+	SetOnConnStop(func(IConnection))
+	// set onConnStartCallback
+	GetOnConnStart() func(IConnection)
+	// set onConnStopCallback
+	GetOnConnStop() func(IConnection)
 }

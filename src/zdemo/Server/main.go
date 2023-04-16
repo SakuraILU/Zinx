@@ -69,7 +69,16 @@ func (this *EchoRouter) PostHandle(request ziface.IRequest) {
 
 func main() {
 	server := znet.NewServer()
+
 	server.AddRounter(0, NewEchoRouter())
 	server.AddRounter(1, NewPingRouter())
+
+	server.SetOnConnStart(func(conn ziface.IConnection) {
+		fmt.Printf("Connection %d is established\n", conn.GetConnID())
+	})
+	server.SetOnConnStop(func(conn ziface.IConnection) {
+		fmt.Printf("Connection %d is stopped\n", conn.GetConnID())
+	})
+
 	server.Serve()
 }
