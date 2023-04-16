@@ -12,6 +12,7 @@ type GlobalObj struct {
 	Ip   string
 	Port uint32
 
+	MaxConnSize     uint32
 	MaxDataLen      uint32
 	MaxMsgRWChanLen uint32
 
@@ -27,6 +28,7 @@ func init() {
 		Ip:   "127.0.0.1",
 		Port: 8999,
 
+		MaxConnSize:     10000,
 		MaxDataLen:      4096,
 		MaxMsgRWChanLen: 1,
 
@@ -37,7 +39,7 @@ func init() {
 	buf, err := ioutil.ReadFile("config/config.json")
 	// invalid json file or not exist...
 	if err != nil {
-		fmt.Println("config/config.json doesn't exist, use default config.")
+		fmt.Println("config/config.json doesn't exist, use default config:")
 		return
 	}
 

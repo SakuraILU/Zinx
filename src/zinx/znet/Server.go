@@ -5,6 +5,8 @@ import (
 	"main/src/zinx/utils"
 	"main/src/zinx/ziface"
 	"net"
+	"os"
+	"os/signal"
 )
 
 // implement of IServer interface, the Server mode
@@ -15,19 +17,22 @@ type Server struct {
 	ip         string
 	port       uint32
 
-	rt_manager ziface.IRouterManager
-	work_pool  ziface.IWorkPool
+	rt_manager   ziface.IRouterManager
+	work_pool    ziface.IWorkPool
+	conn_manager ziface.IConnectionManager
 }
 
-func NewServer(name string) (server *Server) {
+func NewServer() (server *Server) {
 	server = &Server{
-		name:       utils.Global_obj.Name,
-		ip_version: "tcp4",
-		ip:         utils.Global_obj.Ip,
-		port:       utils.Global_obj.Port,
-		rt_manager: NewRouterManager(),
-		work_pool:  NewWorkPool(),
+		name:         utils.Global_obj.Name,
+		ip_version:   "tcp4",
+		ip:           utils.Global_obj.Ip,
+		port:         utils.Global_obj.Port,
+		rt_manager:   NewRouterManager(),
+		work_pool:    NewWorkPool(),
+		conn_manager: NewConnectionManager(),
 	}
+
 	return
 }
 
@@ -48,7 +53,12 @@ func (this *Server) Start() {
 			continue
 		}
 
-		connection := NewConnection(conn_id, conn, this.rt_manager, this.work_pool)
+		if this.conn_manager.Size() >= utils.Global_obj.MaxConnSize {
+			conn.Close()
+			continue
+		}
+
+		connection := NewConnection(conn_id, conn, this)
 		go connection.Start()
 
 		conn_id++
@@ -56,15 +66,52 @@ func (this *Server) Start() {
 }
 
 func (this *Server) Stop() {
-	panic("not implemented!")
+	this.conn_manager.ClearAll()
 }
 
 func (this *Server) Serve() {
-	this.Start()
-
+	go this.Start()
 	defer this.Stop()
+
+	this.waitExitSig()
 }
 
 func (this *Server) AddRounter(msg_id uint32, router ziface.IRouter) {
 	this.rt_manager.AddRouter(msg_id, router)
+}
+
+func (this *Server) GetRouterManager() ziface.IRouterManager {
+	return this.rt_manager
+}
+
+func (this *Server) GetWorkPool() ziface.IWorkPool {
+	return this.work_pool
+}
+
+func (this *Server) GetConnectionManager() ziface.IConnectionManager {
+	return this.conn_manager
+}
+
+func (this *Server) waitExitSig() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Kill, os.Interrupt)
+
+	for {
+		select {
+		case sig := <-c:
+			{
+				fmt.Printf("Got sig %s\n", sig.String())
+				switch sig {
+				case os.Kill, os.Interrupt:
+					{
+						return
+					}
+				default:
+					{
+						fmt.Printf("Got sig %s, use sigterm, sigkill or sigquit to quit the server\n", sig.String())
+					}
+				}
+			}
+		}
+	}
 }

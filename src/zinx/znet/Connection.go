@@ -8,33 +8,40 @@ import (
 )
 
 type Connection struct {
-	id         uint32
-	conn       net.Conn
-	rt_manager ziface.IRouterManager
-	is_closed  bool
+	id        uint32
+	conn      net.Conn
+	is_closed bool
+
+	server       ziface.IServer
+	rt_manager   ziface.IRouterManager
+	work_pool    ziface.IWorkPool
+	conn_manager ziface.IConnectionManager
 
 	data_pack ziface.IDataPack
 	msg_chan  chan []byte
 	exit_chan chan bool
-
-	work_pool ziface.IWorkPool
 }
 
-func NewConnection(id uint32, conn net.Conn, rt_manager ziface.IRouterManager, work_pool ziface.IWorkPool) (connection *Connection) {
+func NewConnection(id uint32, conn net.Conn, server ziface.IServer) (connection *Connection) {
 	data_pack := NewDataPack()
 
 	connection = &Connection{
-		id:         id,
-		conn:       conn,
-		rt_manager: rt_manager,
-		is_closed:  false,
+		id:        id,
+		conn:      conn,
+		is_closed: false,
+
+		server:       server,
+		rt_manager:   server.GetRouterManager(),
+		work_pool:    server.GetWorkPool(),
+		conn_manager: server.GetConnectionManager(),
 
 		data_pack: data_pack,
 		msg_chan:  make(chan []byte, 3),
 		exit_chan: make(chan bool),
-
-		work_pool: work_pool,
 	}
+
+	fmt.Printf("current has %d connections\n", server.GetConnectionManager().Size())
+	server.GetConnectionManager().Add(connection)
 	return
 }
 
@@ -76,18 +83,19 @@ end:
 		}
 	}
 
-	fmt.Printf("writer of connection %d is exit...", this.id)
+	// fmt.Printf("writer of connection %d is exit...", this.id)
 }
 
 func (this *Connection) Start() {
-	// start goes out a Writer，then serves as Reader itself
+	defer this.Stop()
 
+	// start goes out a Writer，then serves as Reader itself
 	go this.Writer()
 
 	for {
 		msg, err := this.unpackMsg()
 		if err == io.EOF {
-			fmt.Printf("Connection %d is ended by client\n", this.id)
+			// fmt.Printf("Connection %d is ended by client\n", this.id)
 			break
 		} else if err != nil {
 			continue
@@ -99,13 +107,13 @@ func (this *Connection) Start() {
 		go this.work_pool.AddRequest(request)
 	}
 
-	defer this.Stop()
 }
 
 func (this *Connection) Stop() {
 	if this.is_closed {
 		return
 	}
+	fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
 
 	// tell writer that reader is ready to exit...
 	// otherwise writer may still use the closed tcp connection and cause error
@@ -116,7 +124,8 @@ func (this *Connection) Stop() {
 
 	close(this.msg_chan)
 	close(this.exit_chan)
-	fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
+
+	this.conn_manager.Remove(this)
 }
 
 func (this *Connection) GetConnID() (id uint32) {

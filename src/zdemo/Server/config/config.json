@@ -4,6 +4,7 @@
 	"Ip":   "127.0.0.1",
 	"Port": 8999,
 
+	"MaxConnSize": 25000,
 	"MaxDataLen": 4096,
     "MaxMsgRWChanLen": 5,
 

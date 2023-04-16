@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"main/src/zinx/ziface"
 	"main/src/zinx/znet"
 )
@@ -15,24 +16,24 @@ func NewPingRouter() (ping_test *PingRouter) {
 }
 
 func (this *PingRouter) PreHandle(request ziface.IRequest) {
-	err := request.GetConn().SendMsg(0, []byte("PreHandle"))
-	if err != nil {
-		panic(err.Error())
-	}
+	// err := request.GetConn().SendMsg(0, []byte("PreHandle"))
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 }
 
 func (this *PingRouter) Handle(request ziface.IRequest) {
-	err := request.GetConn().SendMsg(0, []byte("Pong..."))
+	err := request.GetConn().SendMsg(0, []byte(fmt.Sprintf("I am Server connetion %d", request.GetConn().GetConnID())))
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func (this *PingRouter) PostHandle(request ziface.IRequest) {
-	err := request.GetConn().SendMsg(0, []byte("PostHandle"))
-	if err != nil {
-		panic(err.Error())
-	}
+	// err := request.GetConn().SendMsg(0, []byte("PostHandle"))
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 }
 
 type EchoRouter struct {
@@ -45,10 +46,10 @@ func NewEchoRouter() (ping_test *EchoRouter) {
 }
 
 func (this *EchoRouter) PreHandle(request ziface.IRequest) {
-	err := request.GetConn().SendMsg(0, []byte("PreHandle"))
-	if err != nil {
-		panic(err.Error())
-	}
+	// err := request.GetConn().SendMsg(0, []byte("PreHandle"))
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 }
 
 func (this *EchoRouter) Handle(request ziface.IRequest) {
@@ -60,14 +61,14 @@ func (this *EchoRouter) Handle(request ziface.IRequest) {
 }
 
 func (this *EchoRouter) PostHandle(request ziface.IRequest) {
-	err := request.GetConn().SendMsg(0, []byte("PostHandle"))
-	if err != nil {
-		panic(err.Error())
-	}
+	// err := request.GetConn().SendMsg(0, []byte("PostHandle"))
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 }
 
 func main() {
-	server := znet.NewServer("sever_v0.3")
+	server := znet.NewServer()
 	server.AddRounter(0, NewEchoRouter())
 	server.AddRounter(1, NewPingRouter())
 	server.Serve()

@@ -5,8 +5,14 @@ type IServer interface {
 	Start()
 	// stop Server
 	Stop()
-	// run server
+	// run Server
 	Serve()
-	// add rounter
+	// add a rounter
 	AddRounter(uint32, IRouter)
+	// get routerManager
+	GetRouterManager() IRouterManager
+	// get work pool
+	GetWorkPool() IWorkPool
+	// get connection manager
+	GetConnectionManager() IConnectionManager
 }

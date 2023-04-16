@@ -56,10 +56,14 @@ func (this *ConnectionManager) ClearAll() {
 
 	for id, conn := range this.conns {
 		delete(this.conns, id)
+		this.size--
 		defer conn.Stop()
 	}
 }
 
 func (this *ConnectionManager) Size() uint32 {
+	this.lock.RLock()
+	defer this.lock.RUnlock()
+
 	return this.size
 }

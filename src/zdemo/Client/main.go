@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"main/src/zinx/znet"
 	"net"
+	"sync"
 	"time"
 )
 
-func main() {
-	var msg_id uint32 = 1 // 0 for echo, 1 for ping
+var wg sync.WaitGroup
 
+func establish_dial(msg_id uint32, client_id int) {
 	conn, err := net.Dial("tcp", "127.0.0.1:8999")
 	if err != nil {
 		panic(err.Error())
@@ -17,7 +18,7 @@ func main() {
 	data_pack := znet.NewDataPack()
 	for i := 0; i < 10; i++ {
 
-		msg := znet.NewMessage(msg_id, []byte("Hello, server\n..fegfaehfa fefio\n fjwieofhew\n EOF"))
+		msg := znet.NewMessage(msg_id, []byte(fmt.Sprintf("Hello, server..\n I am client %d", client_id)))
 		buf, err := data_pack.Pack(msg)
 		if err != nil {
 			panic(err.Error())
@@ -41,4 +42,15 @@ func main() {
 
 		time.Sleep(1 * time.Second)
 	}
+
+	wg.Done()
+}
+
+func main() {
+	for i := 0; i < 100; i++ {
+		msg_id := i % 2
+		go establish_dial(uint32(msg_id), i)
+		wg.Add(1)
+	}
+	wg.Wait()
 }
