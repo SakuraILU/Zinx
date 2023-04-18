@@ -2,92 +2,70 @@ package main
 
 import (
 	"fmt"
+	"main/src/zdemo/Server/server"
+	"main/src/zdemo/Server/siface"
 	"main/src/zinx/ziface"
 	"main/src/zinx/znet"
-	"sync"
 )
 
-type PingRouter struct {
+type OnlineRouter struct {
 	znet.BaseRounter
-	cnt      uint32
-	cnt_lock sync.RWMutex
+	room siface.IRoom
 }
 
-func NewPingRouter() (ping_test *PingRouter) {
-	ping_test = &PingRouter{
-		cnt:      0,
-		cnt_lock: sync.RWMutex{},
+func NewOnlineRouter(room siface.IRoom) (online_rt *OnlineRouter) {
+	online_rt = &OnlineRouter{
+		room: room,
 	}
 	return
 }
 
-func (this *PingRouter) PreHandle(request ziface.IRequest) {
-	this.cnt_lock.Lock()
-	defer this.cnt_lock.Unlock()
-
-	request.GetConn().SetProperty("total ping", this.cnt)
-	this.cnt++
-}
-
-func (this *PingRouter) Handle(request ziface.IRequest) {
-	cnt, err := request.GetConn().GetProperty("total ping")
-	cnt = cnt.(uint32)
-	err = request.GetConn().SendMsg(0, []byte(fmt.Sprintf("[NPing %v]I am Server connetion %d", cnt, request.GetConn().GetConnID())))
+func (this *OnlineRouter) Handle(request ziface.IRequest) {
+	user := server.NewUser(string(request.GetData()), request.GetConn(), this.room)
+	err := this.room.AddUser(user)
 	if err != nil {
-		panic(err.Error())
+		request.GetConn().SendMsg(10, []byte(err.Error()))
+		return
+	} else {
+		go user.StartWorker()
+		fmt.Printf("user %s is online...", user.GetName())
+		this.room.BroadCastMsg([]byte(fmt.Sprintf("user %s is online...", user.GetName())))
 	}
 }
 
-func (this *PingRouter) PostHandle(request ziface.IRequest) {
-	// err := request.GetConn().SendMsg(0, []byte("PostHandle"))
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-}
-
-type EchoRouter struct {
+type BroadcastRouter struct {
 	znet.BaseRounter
+	room siface.IRoom
 }
 
-func NewEchoRouter() (ping_test *EchoRouter) {
-	ping_test = &EchoRouter{}
+func NewBroadcastRouter(room siface.IRoom) (broadcast_rt *BroadcastRouter) {
+	broadcast_rt = &BroadcastRouter{
+		room: room,
+	}
+
 	return
 }
 
-func (this *EchoRouter) PreHandle(request ziface.IRequest) {
-	// err := request.GetConn().SendMsg(0, []byte("PreHandle"))
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-}
-
-func (this *EchoRouter) Handle(request ziface.IRequest) {
-	data := request.GetData()
-	err := request.GetConn().SendMsg(0, data)
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-func (this *EchoRouter) PostHandle(request ziface.IRequest) {
-	// err := request.GetConn().SendMsg(0, []byte("PostHandle"))
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
+func (this *BroadcastRouter) Handle(request ziface.IRequest) {
+	this.room.BroadCastMsg(request.GetData())
 }
 
 func main() {
-	server := znet.NewServer()
+	chat_server := znet.NewServer()
 
-	server.AddRounter(0, NewEchoRouter())
-	server.AddRounter(1, NewPingRouter())
+	room := server.NewRoom("room0", 100)
+	go room.StartRoom()
+	chat_server.AddRounter(0, NewOnlineRouter(room))
+	chat_server.AddRounter(1, NewBroadcastRouter(room))
 
-	server.SetOnConnStart(func(conn ziface.IConnection) {
+	chat_server.SetOnConnStart(func(conn ziface.IConnection) {
 		fmt.Printf("Connection %d is established\n", conn.GetConnID())
 	})
-	server.SetOnConnStop(func(conn ziface.IConnection) {
+	chat_server.SetOnConnStop(func(conn ziface.IConnection) {
 		fmt.Printf("Connection %d is stopped\n", conn.GetConnID())
 	})
 
-	server.Serve()
+	chat_server.Serve()
+
+	room.StopRoom()
 }
