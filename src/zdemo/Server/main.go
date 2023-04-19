@@ -8,64 +8,51 @@ import (
 	"main/src/zinx/znet"
 )
 
-type OnlineRouter struct {
-	znet.BaseRounter
-	room siface.IRoom
+var room siface.IRoom = server.NewRoom("room0", 100)
+
+func main() {
+	defer room.StopRoom()
+	go room.StartRoom()
+
+	chat_server := znet.NewServer()
+
+	chat_server.AddRounter(1, server.NewBroadcastRouter())
+	chat_server.AddRounter(2, server.NewChangeNameRouter())
+	chat_server.AddRounter(3, server.NewWhoRouter())
+
+	chat_server.SetOnConnStart(online)
+	chat_server.SetOnConnStop(offline)
+
+	chat_server.Serve()
 }
 
-func NewOnlineRouter(room siface.IRoom) (online_rt *OnlineRouter) {
-	online_rt = &OnlineRouter{
-		room: room,
-	}
-	return
-}
-
-func (this *OnlineRouter) Handle(request ziface.IRequest) {
-	user := server.NewUser(string(request.GetData()), request.GetConn(), this.room)
-	err := this.room.AddUser(user)
+func online(conn ziface.IConnection) {
+	fmt.Println("here")
+	user := server.NewUser(conn.RemoteAddr().String(), conn, room)
+	err := room.AddUser(user)
 	if err != nil {
-		request.GetConn().SendMsg(10, []byte(err.Error()))
+		conn.SendMsg(10, []byte(err.Error()))
 		return
 	} else {
 		go user.StartWorker()
 		fmt.Printf("user %s is online...", user.GetName())
-		this.room.BroadCastMsg([]byte(fmt.Sprintf("user %s is online...", user.GetName())))
+		room.BroadCastMsg([]byte(fmt.Sprintf("[%s] is online", user.GetName())))
+
+		conn.SetProperty("user", user)
 	}
 }
 
-type BroadcastRouter struct {
-	znet.BaseRounter
-	room siface.IRoom
-}
-
-func NewBroadcastRouter(room siface.IRoom) (broadcast_rt *BroadcastRouter) {
-	broadcast_rt = &BroadcastRouter{
-		room: room,
+func offline(conn ziface.IConnection) {
+	iuser, err := conn.GetProperty("user")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
 	}
+	user := iuser.(siface.IUser)
+	room := user.GetRoom()
 
-	return
-}
+	room.RemoveUser(user)
 
-func (this *BroadcastRouter) Handle(request ziface.IRequest) {
-	this.room.BroadCastMsg(request.GetData())
-}
-
-func main() {
-	chat_server := znet.NewServer()
-
-	room := server.NewRoom("room0", 100)
-	go room.StartRoom()
-	chat_server.AddRounter(0, NewOnlineRouter(room))
-	chat_server.AddRounter(1, NewBroadcastRouter(room))
-
-	chat_server.SetOnConnStart(func(conn ziface.IConnection) {
-		fmt.Printf("Connection %d is established\n", conn.GetConnID())
-	})
-	chat_server.SetOnConnStop(func(conn ziface.IConnection) {
-		fmt.Printf("Connection %d is stopped\n", conn.GetConnID())
-	})
-
-	chat_server.Serve()
-
-	room.StopRoom()
+	msg := fmt.Sprintf("[%s] is offline", user.GetName())
+	room.BroadCastMsg([]byte(msg))
 }

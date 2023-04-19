@@ -53,11 +53,40 @@ func main() {
 		panic(err.Error())
 	}
 
-	msg := znet.NewMessage(0, []byte("lky"))
+	head := make([]byte, data_pack.GetHeadLen())
+	_, err = conn.Read(head)
+	if err != nil {
+		panic(err.Error())
+	}
+	msg, err := data_pack.UnpackHead(head)
+	if err != nil {
+		panic(err.Error())
+	}
+	conn.Read(msg.GetMsgData())
+	fmt.Println(string(msg.GetMsgData()))
+	// change name
+	msg = znet.NewMessage(2, []byte("lky"))
 	data, err := data_pack.Pack(msg)
 	conn.Write(data)
 
-	head := make([]byte, data_pack.GetHeadLen())
+	head = make([]byte, data_pack.GetHeadLen())
+	_, err = conn.Read(head)
+	if err != nil {
+		panic(err.Error())
+	}
+	msg, err = data_pack.UnpackHead(head)
+	if err != nil {
+		panic(err.Error())
+	}
+	conn.Read(msg.GetMsgData())
+	fmt.Println(string(msg.GetMsgData()))
+
+	// who
+	msg = znet.NewMessage(3, []byte(""))
+	data, err = data_pack.Pack(msg)
+	conn.Write(data)
+
+	head = make([]byte, data_pack.GetHeadLen())
 	_, err = conn.Read(head)
 	if err != nil {
 		panic(err.Error())

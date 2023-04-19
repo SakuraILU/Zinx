@@ -18,16 +18,21 @@ type User struct {
 
 func NewUser(name string, conn ziface.IConnection, room siface.IRoom) (user *User) {
 	user = &User{
-		name:     name,
-		conn:     conn,
-		room:     room,
-		msg_chan: make(chan []byte, 10),
+		name:      name,
+		conn:      conn,
+		room:      room,
+		msg_chan:  make(chan []byte, 10),
+		exit_chan: make(chan bool),
 	}
 	return
 }
 
 func (this *User) GetName() string {
 	return this.name
+}
+
+func (this *User) SetName(name string) {
+	this.name = name
 }
 
 func (this *User) GetRemoteAddr() net.Addr {

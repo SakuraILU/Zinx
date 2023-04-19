@@ -6,6 +6,8 @@ import (
 
 type IUser interface {
 	GetName() string
+	SetName(string)
+
 	GetRemoteAddr() net.Addr
 	AddMsg([]byte)
 	StartWorker()

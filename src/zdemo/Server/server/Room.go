@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"main/src/zdemo/Server/siface"
+	"strings"
 	"sync"
 )
 
@@ -70,7 +71,18 @@ func (this *Room) RemoveUser(user siface.IUser) {
 	defer this.lock.Unlock()
 
 	delete(this.users, user.GetName())
-	user.StopWorker()
+}
+
+func (this *Room) GetUserAll() (names string) {
+	this.lock.RLock()
+	defer this.lock.RUnlock()
+
+	for name, _ := range this.users {
+		names += name + "\n"
+	}
+
+	strings.TrimRight(names, "\n")
+	return
 }
 
 func (this *Room) ClearAll() {

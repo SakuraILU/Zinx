@@ -9,6 +9,7 @@ type IRoom interface {
 	GetUser(name string) (IUser, error)
 	AddUser(IUser) error
 	RemoveUser(IUser)
+	GetUserAll() string
 	ClearAll()
 
 	GetUserNum() uint32
