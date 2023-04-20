@@ -3,15 +3,14 @@ package server
 import (
 	"main/src/zdemo/Server/siface"
 	"main/src/zinx/ziface"
-	"main/src/zinx/znet"
 )
 
 type WhosRouter struct {
-	znet.BaseRounter
+	Router
 }
 
-func NewWhoRouter() (who_rt *WhosRouter) {
-	who_rt = &WhosRouter{}
+func NewWhosRouter() (whos_rt *WhosRouter) {
+	whos_rt = &WhosRouter{}
 	return
 }
 

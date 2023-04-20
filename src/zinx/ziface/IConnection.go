@@ -7,6 +7,8 @@ import (
 type IConnection interface {
 	Start()
 	Stop()
+	StopPassive()
+
 	GetConnID() uint32
 	RemoteAddr() net.Addr
 	SendMsg(id uint32, data []byte) error

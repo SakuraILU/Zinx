@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"main/src/zdemo/Server/siface"
 	"main/src/zinx/ziface"
-	"main/src/zinx/znet"
 )
 
 type BroadcastRouter struct {
-	znet.BaseRounter
+	Router
 }
 
 func NewBroadcastRouter() (broadcast_rt *BroadcastRouter) {
@@ -24,6 +23,6 @@ func (this *BroadcastRouter) Handle(request ziface.IRequest) {
 	user := iuser.(siface.IUser)
 	room := user.GetRoom()
 
-	msg := fmt.Sprintf("[%s] %s", user.GetName(), request.GetData())
+	msg := fmt.Sprintf("[%s]:%s", user.GetName(), request.GetData())
 	room.BroadCastMsg([]byte(msg))
 }

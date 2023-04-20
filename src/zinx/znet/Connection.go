@@ -10,9 +10,10 @@ import (
 )
 
 type Connection struct {
-	id        uint32
-	conn      net.Conn
-	is_closed bool
+	id         uint32
+	conn       net.Conn
+	is_closed  bool
+	close_lock sync.Mutex
 
 	server       ziface.IServer
 	rt_manager   ziface.IRouterManager
@@ -45,7 +46,7 @@ func NewConnection(id uint32, conn net.Conn, server ziface.IServer) (connection 
 
 		data_pack: data_pack,
 		msg_chan:  make(chan []byte, 3),
-		exit_chan: make(chan bool),
+		exit_chan: make(chan bool, 2),
 
 		onConnStart: server.GetOnConnStart(),
 		onConnStop:  server.GetOnConnStop(),
@@ -99,7 +100,7 @@ end:
 }
 
 func (this *Connection) Start() {
-	defer this.conn_manager.Remove(this)
+	defer this.Stop()
 
 	// start goes out a Writer，then serves as Reader itself
 	go this.Writer()
@@ -109,10 +110,15 @@ func (this *Connection) Start() {
 
 	for {
 		msg, err := this.unpackMsg()
-		if err == io.EOF {
-			// fmt.Printf("Connection %d is ended by client\n", this.id)
+		// fmt.Println("loop...")
+		if errors.Is(err, io.EOF) {
+			fmt.Printf("Connection %d is ended by client\n", this.id)
+			break
+		} else if errors.Is(err, net.ErrClosed) {
+			fmt.Printf("Connection %d is ended by sever\n", this.id)
 			break
 		} else if err != nil {
+			fmt.Println(err.Error())
 			continue
 		}
 
@@ -125,10 +131,13 @@ func (this *Connection) Start() {
 }
 
 func (this *Connection) Stop() {
+	this.close_lock.Lock()
+	defer this.close_lock.Unlock()
+
 	if this.is_closed {
 		return
 	}
-	// fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
+	fmt.Printf("Connection %d is stopped[Reader]\n", this.id)
 
 	// on stop callback, before end this connection...
 	this.onConnStop(this)
@@ -139,9 +148,15 @@ func (this *Connection) Stop() {
 
 	this.conn.Close()
 	this.is_closed = true
-
 	close(this.msg_chan)
 	close(this.exit_chan)
+
+	this.conn_manager.Remove(this)
+}
+
+func (this *Connection) StopPassive() {
+	defer this.Stop()
+	defer this.conn_manager.Remove(this)
 }
 
 func (this *Connection) GetConnID() (id uint32) {
@@ -160,7 +175,6 @@ func (this *Connection) SendMsg(id uint32, data []byte) (err error) {
 	if err != nil {
 		return
 	}
-	// this.conn.Write(buf)
 	this.msg_chan <- buf
 	return
 }

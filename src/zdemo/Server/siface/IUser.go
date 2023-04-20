@@ -12,6 +12,10 @@ type IUser interface {
 	AddMsg([]byte)
 	StartWorker()
 	StopWorker()
+	StopConn()
 
 	GetRoom() IRoom
+
+	SetActive(bool)
+	IsActive() bool
 }

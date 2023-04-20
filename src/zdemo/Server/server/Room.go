@@ -6,6 +6,7 @@ import (
 	"main/src/zdemo/Server/siface"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Room struct {
@@ -13,11 +14,12 @@ type Room struct {
 
 	users map[string]siface.IUser
 	lock  sync.RWMutex
-
-	cap uint32
+	cap   uint32
 
 	broadcast_msg chan []byte
 	exit_chan     chan bool
+
+	timeout uint32
 }
 
 func NewRoom(name string, cap uint32) (room *Room) {
@@ -28,6 +30,7 @@ func NewRoom(name string, cap uint32) (room *Room) {
 		cap:           cap,
 		broadcast_msg: make(chan []byte),
 		exit_chan:     make(chan bool),
+		timeout:       300,
 	}
 	return
 }
@@ -69,7 +72,6 @@ func (this *Room) AddUser(user siface.IUser) (err error) {
 func (this *Room) RemoveUser(user siface.IUser) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
-
 	delete(this.users, user.GetName())
 }
 
@@ -81,7 +83,7 @@ func (this *Room) GetUserAll() (names string) {
 		names += name + "\n"
 	}
 
-	strings.TrimRight(names, "\n")
+	names = strings.TrimRight(names, "\n")
 	return
 }
 
@@ -106,13 +108,34 @@ func (this *Room) GetCapacity() uint32 {
 }
 
 func (this *Room) StartRoom() {
-	this.broadCaster()
+	go this.broadCaster()
+	this.StartTimeouter()
 }
 
 func (this *Room) StopRoom() {
 	this.exit_chan <- true
 	close(this.broadcast_msg)
 	close(this.exit_chan)
+}
+
+func (this *Room) StartTimeouter() {
+	ticker := time.NewTicker(time.Duration(this.timeout) * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			this.lock.Lock()
+			for _, user := range this.users {
+				if !user.IsActive() {
+					go user.StopConn()
+				} else {
+					user.SetActive(false)
+				}
+			}
+			this.lock.Unlock()
+		case <-this.exit_chan:
+			return
+		}
+	}
 }
 
 func (this *Room) broadCaster() {

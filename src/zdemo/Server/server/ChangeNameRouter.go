@@ -3,12 +3,12 @@ package server
 import (
 	"fmt"
 	"main/src/zdemo/Server/siface"
+	"main/src/zdemo/Server/utils"
 	"main/src/zinx/ziface"
-	"main/src/zinx/znet"
 )
 
 type ChangeNameRouter struct {
-	znet.BaseRounter
+	Router
 }
 
 func NewChangeNameRouter() (change_name_rt *ChangeNameRouter) {
@@ -26,7 +26,7 @@ func (this *ChangeNameRouter) Handle(request ziface.IRequest) {
 
 	_, err = room.GetUser(string(request.GetData())) // check existance
 	if err == nil {
-		request.GetConn().SendMsg(0, []byte("this name already exist"))
+		request.GetConn().SendMsg(utils.NCmdResponse, []byte("This name already exist"))
 		return
 	}
 
@@ -38,6 +38,6 @@ func (this *ChangeNameRouter) Handle(request ziface.IRequest) {
 		panic(err.Error())
 	}
 
-	msg := fmt.Sprintf("new name: %s", user.GetName())
-	request.GetConn().SendMsg(0, []byte(msg))
+	msg := fmt.Sprintf("Set new name to %s", user.GetName())
+	request.GetConn().SendMsg(utils.NCmdResponse, []byte(msg))
 }
