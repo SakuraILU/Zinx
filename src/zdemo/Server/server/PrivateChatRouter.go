@@ -32,7 +32,7 @@ func (this *PrivateChatRouter) Handle(request ziface.IRequest) {
 
 	user2chat, err := room.GetUser(name)
 	if err != nil {
-		msg = fmt.Sprintf("User %d is not exist", name)
+		msg = fmt.Sprintf("User %s is not exist", name)
 		request.GetConn().SendMsg(utils.NCmdResponse, []byte(msg))
 		return
 	}

@@ -8,14 +8,12 @@ import (
 
 type ConnectionManager struct {
 	conns map[uint32]ziface.IConnection
-	size  uint32
 	lock  sync.RWMutex
 }
 
 func NewConnectionManager() (cm *ConnectionManager) {
 	cm = &ConnectionManager{
 		conns: make(map[uint32]ziface.IConnection),
-		size:  0,
 		lock:  sync.RWMutex{},
 	}
 	return
@@ -38,7 +36,6 @@ func (this *ConnectionManager) Add(conn ziface.IConnection) {
 	defer this.lock.Unlock()
 
 	this.conns[conn.GetConnID()] = conn
-	this.size++
 }
 
 // not only remove the element in the map, but also stop this connection to free its socket and other resources
@@ -47,7 +44,6 @@ func (this *ConnectionManager) Remove(conn ziface.IConnection) {
 	defer this.lock.Unlock()
 
 	delete(this.conns, conn.GetConnID())
-	this.size--
 	// defer conn.Stop()
 }
 
@@ -58,8 +54,7 @@ func (this *ConnectionManager) ClearAll() {
 
 	for id, conn := range this.conns {
 		delete(this.conns, id)
-		this.size--
-		defer conn.Stop()
+		go conn.Stop()
 	}
 }
 
@@ -67,5 +62,5 @@ func (this *ConnectionManager) Size() uint32 {
 	this.lock.RLock()
 	defer this.lock.RUnlock()
 
-	return this.size
+	return uint32(len(this.conns))
 }

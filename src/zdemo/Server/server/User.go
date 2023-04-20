@@ -102,3 +102,7 @@ func (this *User) IsActive() bool {
 
 	return this.is_active
 }
+
+func (this *User) SetRoom(room siface.IRoom) {
+	this.room = room
+}

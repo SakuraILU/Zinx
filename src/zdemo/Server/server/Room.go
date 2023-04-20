@@ -66,6 +66,7 @@ func (this *Room) AddUser(user siface.IUser) (err error) {
 	}
 
 	this.users[user.GetName()] = user
+	user.SetRoom(this)
 
 	return
 }
@@ -73,9 +74,10 @@ func (this *Room) RemoveUser(user siface.IUser) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 	delete(this.users, user.GetName())
+	user.SetRoom(nil)
 }
 
-func (this *Room) GetUserAll() (names string) {
+func (this *Room) GetAllUserMsg() (names string) {
 	this.lock.RLock()
 	defer this.lock.RUnlock()
 

@@ -6,6 +6,8 @@ const (
 	NBroadcast
 	NPrivateChat
 	NChangeName
+	NNewRoom
+	NSwitchRoom
 	NWhos
 	NErr
 )

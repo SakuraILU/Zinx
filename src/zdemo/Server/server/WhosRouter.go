@@ -22,6 +22,6 @@ func (this *WhosRouter) Handle(request ziface.IRequest) {
 	user := iuser.(siface.IUser)
 	room := user.GetRoom()
 
-	names := room.GetUserAll()
+	names := room.GetAllUserMsg()
 	request.GetConn().SendMsg(0, []byte(names))
 }

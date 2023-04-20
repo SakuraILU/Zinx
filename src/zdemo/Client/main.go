@@ -63,6 +63,10 @@ func writer(conn net.Conn) {
 		case Exit:
 			exit_chan <- true
 			return
+		case NewRoom:
+			msg = znet.NewMessage(utils.NNewRoom, []byte(cmd.Arg))
+		case SwitchRoom:
+			msg = znet.NewMessage(utils.NSwitchRoom, []byte(cmd.Arg))
 		default:
 			fmt.Println("[Error]: Unsupported cmd")
 			fmt.Printf(">>>")
@@ -88,6 +92,8 @@ const (
 	To
 	Rename
 	Whos
+	NewRoom
+	SwitchRoom
 	Exit
 )
 
@@ -135,12 +141,20 @@ func cmdParse() (cmd *Cmd, err error) {
 		// fmt.Printf(cmd.Arg)
 	} else if strings.HasPrefix(line, "rename") {
 		cmd.Cmdtype = Rename
-		cmd.Arg = strings.Split(line, " ")[1]
+		cmd.Arg = strings.SplitN(line, " ", 2)[1]
 		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
 	} else if strings.HasPrefix(line, "whos") {
 		cmd.Cmdtype = Whos
 	} else if strings.HasPrefix(line, "exit") {
 		cmd.Cmdtype = Exit
+	} else if strings.HasPrefix(line, "rnew") {
+		cmd.Cmdtype = NewRoom
+		cmd.Arg = strings.SplitN(line, " ", 2)[1]
+		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
+	} else if strings.HasPrefix(line, "rswitch") {
+		cmd.Cmdtype = SwitchRoom
+		cmd.Arg = strings.SplitN(line, " ", 2)[1]
+		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
 	}
 
 	return

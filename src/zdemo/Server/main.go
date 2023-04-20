@@ -7,11 +7,10 @@ import (
 	"main/src/zinx/znet"
 )
 
-var room siface.IRoom = server.NewRoom("room0", 100)
+// var room siface.IRoom = server.NewRoom("room0", 100)
+var world siface.IWorld = server.NewWorld()
 
 func main() {
-	defer room.StopRoom()
-	go room.StartRoom()
 
 	chat_server := znet.NewServer()
 
@@ -19,6 +18,8 @@ func main() {
 	chat_server.AddRounter(utils.NPrivateChat, server.NewPrivateChatRouter())
 	chat_server.AddRounter(utils.NChangeName, server.NewChangeNameRouter())
 	chat_server.AddRounter(utils.NWhos, server.NewWhosRouter())
+	chat_server.AddRounter(utils.NNewRoom, server.NewNewRoomRouter(world))
+	chat_server.AddRounter(utils.NSwitchRoom, server.NewSwtichRoomRouter(world))
 
 	chat_server.SetOnConnStart(online)
 	chat_server.SetOnConnStop(offline)

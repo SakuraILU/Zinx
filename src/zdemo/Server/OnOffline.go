@@ -9,9 +9,15 @@ import (
 )
 
 func online(conn ziface.IConnection) {
+	room, err := world.GetRoom("default")
+	if err != nil {
+		conn.SendMsg(utils.NErr, []byte(err.Error()))
+		return
+	}
+
 	user := server.NewUser(conn.RemoteAddr().String(), conn, room)
 	user.SetActive(true)
-	err := room.AddUser(user)
+	err = room.AddUser(user)
 	if err != nil {
 		conn.SendMsg(utils.NErr, []byte(err.Error()))
 		return

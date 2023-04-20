@@ -15,6 +15,7 @@ type IUser interface {
 	StopConn()
 
 	GetRoom() IRoom
+	SetRoom(IRoom)
 
 	SetActive(bool)
 	IsActive() bool
