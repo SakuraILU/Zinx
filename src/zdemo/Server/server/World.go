@@ -23,7 +23,7 @@ func NewWorld() (world *World) {
 	}
 
 	room_name := "default"
-	world.rooms[room_name] = NewRoom(room_name, 20)
+	world.rooms[room_name] = NewRoom(room_name, 10000)
 	go world.rooms[room_name].StartRoom()
 
 	return
@@ -75,8 +75,9 @@ func (this *World) GetAllRoomMsg() (names string) {
 	this.lock.RLock()
 	defer this.lock.RUnlock()
 
-	for name, _ := range this.rooms {
-		names += name + "\n"
+	names = fmt.Sprintf("name\t\tnum\tcapacity\n")
+	for name, room := range this.rooms {
+		names += fmt.Sprintf("%s\t\t%d\t%d\n", name, room.GetUserNum(), room.GetCapacity())
 	}
 
 	names = strings.TrimRight(names, "\n")
@@ -99,6 +100,10 @@ func (this *World) UserSwitchRoom(user siface.IUser, nroom_to string, nroom_from
 	room_to, ok := this.rooms[nroom_to]
 	if !ok {
 		err = errors.New("Room_to is not exist")
+		return
+	}
+	if _, err = room_to.GetUser(user.GetName()); err == nil {
+		err = errors.New("Room_to already has a user with your same name, please rename your name")
 		return
 	}
 

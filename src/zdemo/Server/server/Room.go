@@ -54,7 +54,7 @@ func (this *Room) AddUser(user siface.IUser) (err error) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
-	if uint32(len(this.users)) > this.cap {
+	if uint32(len(this.users)) >= this.cap {
 		err = errors.New(fmt.Sprintf("fail to add user %s, out of capacity, Room %s with capacity %d", user.GetName(), this.name, this.cap))
 		return
 	}

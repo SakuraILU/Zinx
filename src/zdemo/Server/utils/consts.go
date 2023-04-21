@@ -1,13 +1,15 @@
 package utils
 
 const (
-	NMsgResponse = iota
+	NErr = iota
+	NMsgResponse
 	NCmdResponse
 	NBroadcast
 	NPrivateChat
 	NChangeName
 	NNewRoom
 	NSwitchRoom
+	NRooms
+	NCurrentRoom
 	NWhos
-	NErr
 )

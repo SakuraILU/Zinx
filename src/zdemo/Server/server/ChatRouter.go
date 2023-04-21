@@ -8,6 +8,29 @@ import (
 	"strings"
 )
 
+// Boradcast
+type BroadcastRouter struct {
+	Router
+}
+
+func NewBroadcastRouter() (broadcast_rt *BroadcastRouter) {
+	broadcast_rt = &BroadcastRouter{}
+	return
+}
+
+func (this *BroadcastRouter) Handle(request ziface.IRequest) {
+	iuser, err := request.GetConn().GetProperty("user")
+	if err != nil {
+		panic(err.Error())
+	}
+	user := iuser.(siface.IUser)
+	room := user.GetRoom()
+
+	msg := fmt.Sprintf("[%s]:%s", user.GetName(), request.GetData())
+	room.BroadCastMsg([]byte(msg))
+}
+
+// Private chat
 type PrivateChatRouter struct {
 	Router
 }

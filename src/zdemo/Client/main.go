@@ -6,20 +6,26 @@ import (
 	"fmt"
 	"io"
 	"main/src/zdemo/Server/utils"
-	"main/src/zinx/ziface"
 	"main/src/zinx/znet"
 	"net"
 	"os"
 	"strings"
 )
 
+type Cmd struct {
+	Cmdtype int
+	Arg     string
+}
+
+var promt string = ">>>"
 var cmdresp_chan chan bool = make(chan bool)
+var exit_chan chan bool = make(chan bool)
 
 func reader(conn net.Conn) {
 	data_pack := znet.NewDataPack()
 
 	for {
-		fmt.Printf(">>>")
+		fmt.Printf(promt)
 
 		head := make([]byte, data_pack.GetHeadLen())
 		_, err := conn.Read(head)
@@ -46,33 +52,12 @@ func writer(conn net.Conn) {
 
 	for {
 		cmd, err := cmdParse()
-		if err != nil {
-			panic(err.Error())
-		}
-
-		var msg ziface.IMessage
-		switch cmd.Cmdtype {
-		case To:
-			msg = znet.NewMessage(utils.NPrivateChat, []byte(cmd.Arg))
-		case Bc:
-			msg = znet.NewMessage(utils.NBroadcast, []byte(cmd.Arg))
-		case Rename:
-			msg = znet.NewMessage(utils.NChangeName, []byte(cmd.Arg))
-		case Whos:
-			msg = znet.NewMessage(utils.NWhos, []byte(cmd.Arg))
-		case Exit:
-			exit_chan <- true
-			return
-		case NewRoom:
-			msg = znet.NewMessage(utils.NNewRoom, []byte(cmd.Arg))
-		case SwitchRoom:
-			msg = znet.NewMessage(utils.NSwitchRoom, []byte(cmd.Arg))
-		default:
-			fmt.Println("[Error]: Unsupported cmd")
-			fmt.Printf(">>>")
+		if err != nil || cmd.Cmdtype == utils.NErr {
+			fmt.Printf(promt)
 			continue
 		}
 
+		msg := znet.NewMessage(uint32(cmd.Cmdtype), []byte(cmd.Arg))
 		data, err := data_pack.Pack(msg)
 		if err != nil {
 			panic(err.Error())
@@ -80,34 +65,20 @@ func writer(conn net.Conn) {
 		if _, err := conn.Write(data); err != nil {
 			panic(err.Error())
 		}
-
-		// select {
-		// case <-cmdresp_chan:
-		// }
 	}
 }
 
-const (
-	Bc = 1 + iota // in case..input a empty line, and Cmd.Cmdtype = 0 in default... so treat 0 as invalid..
-	To
-	Rename
-	Whos
-	NewRoom
-	SwitchRoom
-	Exit
-)
-
-var exit_chan chan bool = make(chan bool)
-
-type Cmd struct {
-	Cmdtype int
-	Arg     string
-}
-
 func cmdParse() (cmd *Cmd, err error) {
-	reader := bufio.NewReader(os.Stdin)
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			err = rerr.(error)
+			fmt.Println("cmd with invalid argument")
+		}
+	}()
 
-	cmd = &Cmd{}
+	cmd = &Cmd{Cmdtype: utils.NErr}
+
+	reader := bufio.NewReader(os.Stdin)
 
 	pasrse_txt := func() (arg string) {
 		arg += "\n"
@@ -131,30 +102,37 @@ func cmdParse() (cmd *Cmd, err error) {
 		return
 	}
 	if strings.HasPrefix(line, "to") {
-		cmd.Cmdtype = To
+		cmd.Cmdtype = utils.NPrivateChat
 		cmd.Arg = strings.SplitN(line, " ", 2)[1]
 		cmd.Arg = strings.TrimRight(cmd.Arg, "\n") + ":"
 		cmd.Arg += pasrse_txt()
 	} else if strings.HasPrefix(line, "bc") {
-		cmd.Cmdtype = Bc
+		cmd.Cmdtype = utils.NBroadcast
 		cmd.Arg = pasrse_txt()
-		// fmt.Printf(cmd.Arg)
 	} else if strings.HasPrefix(line, "rename") {
-		cmd.Cmdtype = Rename
+		cmd.Cmdtype = utils.NChangeName
 		cmd.Arg = strings.SplitN(line, " ", 2)[1]
 		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
 	} else if strings.HasPrefix(line, "whos") {
-		cmd.Cmdtype = Whos
+		cmd.Cmdtype = utils.NWhos
+	} else if strings.HasPrefix(line, "newroom") {
+		cmd.Cmdtype = utils.NNewRoom
+		cmd.Arg = strings.SplitN(line, " ", 2)[1]
+		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
+	} else if strings.HasPrefix(line, "enter") {
+		cmd.Cmdtype = utils.NSwitchRoom
+		cmd.Arg = strings.SplitN(line, " ", 2)[1]
+		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
+	} else if strings.HasPrefix(line, "curroom") {
+		cmd.Cmdtype = utils.NCurrentRoom
+	} else if strings.HasPrefix(line, "rooms") {
+		cmd.Cmdtype = utils.NRooms
 	} else if strings.HasPrefix(line, "exit") {
-		cmd.Cmdtype = Exit
-	} else if strings.HasPrefix(line, "rnew") {
-		cmd.Cmdtype = NewRoom
-		cmd.Arg = strings.SplitN(line, " ", 2)[1]
-		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
-	} else if strings.HasPrefix(line, "rswitch") {
-		cmd.Cmdtype = SwitchRoom
-		cmd.Arg = strings.SplitN(line, " ", 2)[1]
-		cmd.Arg = strings.TrimRight(cmd.Arg, "\n")
+		exit_chan <- true
+		select {}
+	} else {
+		cmd.Cmdtype = utils.NErr
+		fmt.Println("unsupported cmd")
 	}
 
 	return

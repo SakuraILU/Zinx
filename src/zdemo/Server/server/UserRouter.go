@@ -7,6 +7,7 @@ import (
 	"main/src/zinx/ziface"
 )
 
+// Change user name
 type ChangeNameRouter struct {
 	Router
 }
@@ -40,4 +41,26 @@ func (this *ChangeNameRouter) Handle(request ziface.IRequest) {
 
 	msg := fmt.Sprintf("Set new name to %s", user.GetName())
 	request.GetConn().SendMsg(utils.NCmdResponse, []byte(msg))
+}
+
+// find all users in this room (names)
+type WhosRouter struct {
+	Router
+}
+
+func NewWhosRouter() (whos_rt *WhosRouter) {
+	whos_rt = &WhosRouter{}
+	return
+}
+
+func (this *WhosRouter) Handle(request ziface.IRequest) {
+	iuser, err := request.GetConn().GetProperty("user")
+	if err != nil {
+		panic(err.Error())
+	}
+	user := iuser.(siface.IUser)
+	room := user.GetRoom()
+
+	names := room.GetAllUserMsg()
+	request.GetConn().SendMsg(0, []byte(names))
 }

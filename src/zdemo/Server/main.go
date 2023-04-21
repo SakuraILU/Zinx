@@ -14,12 +14,17 @@ func main() {
 
 	chat_server := znet.NewServer()
 
+	// chat
 	chat_server.AddRounter(utils.NBroadcast, server.NewBroadcastRouter())
 	chat_server.AddRounter(utils.NPrivateChat, server.NewPrivateChatRouter())
+	// user
 	chat_server.AddRounter(utils.NChangeName, server.NewChangeNameRouter())
 	chat_server.AddRounter(utils.NWhos, server.NewWhosRouter())
+	// room
 	chat_server.AddRounter(utils.NNewRoom, server.NewNewRoomRouter(world))
 	chat_server.AddRounter(utils.NSwitchRoom, server.NewSwtichRoomRouter(world))
+	chat_server.AddRounter(utils.NCurrentRoom, server.NewCurrentRouter())
+	chat_server.AddRounter(utils.NRooms, server.NewRoomsRouter(world))
 
 	chat_server.SetOnConnStart(online)
 	chat_server.SetOnConnStop(offline)
