@@ -17,20 +17,9 @@
 客户端支持的命令有
 
 1. 群聊
-   bc
-   line1 --|
-   line2 --|
-   ... |--> message
-   lineN --|
-   eof <-- end tag
-
+   bc\nline1\nline2\n...\nlineN\neof
 2. 私聊
-   to [user name]
-   line1 --|
-   line2 --|
-   ... |--> message
-   lineN --|
-   eof <-- end tag
+   to [user name]\nline1\nline2\n...\nlineN\neof
 3. 修改聊天名称[默认用户名称是 ip 地址，不能和群内成员重名]
    rename [your new name]
 4. 查看当前群聊的所有用户
