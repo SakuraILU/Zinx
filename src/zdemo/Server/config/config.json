@@ -1,13 +1,13 @@
 {
-	"Name": "zinx_v0.6",
+	"Name": "zinx_v1.0", 	// 服务器名称
 
-	"Ip":   "127.0.0.1",
-	"Port": 8999,
+	"Ip":   "127.0.0.1",	// 服务器IP
+	"Port": 8999,			// 服务器Port
 
-	"MaxConnSize": 25000,
-	"MaxDataLen": 4096,
-    "MaxMsgRWChanLen": 5,
+	"MaxConnSize": 25000, 	// 最大连接数量
+	"MaxDataLen": 4096,  	// 单次传输的最大数据长度
+    "MaxMsgRWChanLen": 5,	// [读写分离模块]读写go程间的数据管道长度
 
-	"PoolSize": 5,
-	"TaskQueueSize": 20
+	"PoolSize": 5, 			// 工作池大小，即worker的数量
+	"TaskQueueSize": 20 	// 每个worker的任务管道长度
 }
